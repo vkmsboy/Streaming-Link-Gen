@@ -1,51 +1,49 @@
-import logging
+from helper_funcs.bot_utils import *
+from config import Config
+import pyrogram
+import shutil, psutil
+from pyrogram import Client as app
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from helper_funcs.fsub import handle_force_sub
 import os
-import time
 from config import Config
 import pyrogram
 import wget
 import pyromod.listen
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-logging.getLogger("pyrogram").setLevel(logging.WARNING)
-botStartTime = time.time()
+API_ID = environ.get('API_ID')
+API_HASH = environ.get('API_HASH')
+BOT_TOKEN = environ.get('BOT_TOKEN')
+API_KEY = environ.get('API_KEY', 'f168ed7a4e5846c66a58eb6b93c8e4da2318c2b1')
 
-# create download directory, if not exist
-if not os.path.isdir(Config.DOWNLOAD_LOCATION):
-    os.makedirs(Config.DOWNLOAD_LOCATION)
-plugins = dict(
-    root="plugins"
-)
-
-app = pyrogram.Client(
-    "StreamingLinkRobot",
-    bot_token=Config.TG_BOT_TOKEN,
-    api_id=Config.APP_ID,
-    api_hash=Config.API_HASH,
-    plugins=plugins
-)
+bot = Client('droplink bot',
+             api_id=API_ID,
+             api_hash=API_HASH,
+             bot_token=BOT_TOKEN,
+             workers=50,
+             sleep_threshold=10)
 
 
-def BootUpProcess() -> bool:
-    token_pickle = "token.pickle"
-    if Config.TOKEN_PICKLE:
-        token_pickle = wget.download(Config.TOKEN_PICKLE, out=token_pickle)
-    if not os.path.exists(token_pickle):
-        print("token.pickle file not found!")
-        return False
-    return True
+@bot.on_message(filters.command('start') & filters.private)
+async def start(bot, message):
+    await message.reply(
+        f"**Hi {message.chat.first_name}!**\n\n"
+        "I'm a specialised bot for shortening Droplink.co links which can help you earn money by just sharing links. Made by <a href=\"https://github.com/dakshy\">ToonsHub</a>.")
 
 
-if __name__ == "__main__":
-    print("Starting ...")
-    success = BootUpProcess()
-    if success:
-        app.start()
-        print("\nBot Started!\n")
-        pyrogram.idle()
-        app.stop()
-        print("Exiting ...")
-    else:
-        print("Exiting ...")
+@app.on_message(pyrogram.filters.private & pyrogram.filters.command(["play"]))
+async def direct_player_(bot, update):
+    back = await handle_force_sub(bot, update)
+    if back == 400:
+        return
+    msg = "Now send me Direct Video URL"
+    uri = await input_str(bot, update,msg)
+    if uri == 404:
+        return
+    uri = f"https://{Config.VIDEO_PLAYER_URL}/play?id=" + uri
+    await update.reply_text(text=f"Use the below url to stream in website {uri}")
+    
+    
+  
+  bot.run()
+
