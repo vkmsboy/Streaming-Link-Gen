@@ -20,5 +20,4 @@ async def direct_player_(bot, update):
     if uri == 404:
         return
     uri = f"https://{Config.VIDEO_PLAYER_URL}/play?id=" + uri
-    await update.reply_text(text=f"Use the below url to stream in website {uri}",
-                                        ))
+    await update.reply_text(text=f"Use the below url to stream in website {uri}")
